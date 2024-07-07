@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11">
+<style>
+  th,td{
+    white-space:nowrap;
+  }
+</style>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="max-w-3xl mx-auto bg-white rounded shadow p-6">
+        <h1 class="text-xl font-semibold mb-4">Inventory Management</h1>
+
+        <!-- Form for adding new item -->
+        <form id="addItemForm" class="mb-4">
+            <input type="text" id="itemName" placeholder="Item name" class="w-full p-2 border rounded mb-2">
+            <input type="number" id="itemQuantity" placeholder="Quantity" class="w-full p-2 border rounded mb-2">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Add Item</button>
+        </form>
+
+        <!-- Display items in a table -->
+        <div class="overflow-x-auto">
+            <table id="itemTable" class="min-w-full bg-white border-gray-200 shadow-md rounded mb-4">
+                <thead>
+                    <tr>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
+                        <th class="px-6 py-3 bg-gray-50 text-left text-xs leading-4 font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                        <th class="px-6 py-3 bg-gray-50"></th>
+                    </tr>
+                </thead>
+                <tbody id="itemList">
+                    <!-- JavaScript will populate this table -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // Function to add new item
+        function addItem(name, quantity) {
+            let items = JSON.parse(localStorage.getItem('inventory')) || [];
+            items.push({ name, quantity });
+            localStorage.setItem('inventory', JSON.stringify(items));
+            renderItems();
+        }
+
+        // Function to edit item
+        function editItem(index, newName, newQuantity) {
+            let items = JSON.parse(localStorage.getItem('inventory')) || [];
+            items[index].name = newName;
+            items[index].quantity = newQuantity;
+            localStorage.setItem('inventory', JSON.stringify(items));
+            renderItems();
+        }
+
+        // Function to delete item
+        function deleteItem(index) {
+            let items = JSON.parse(localStorage.getItem('inventory')) || [];
+            items.splice(index, 1);
+            localStorage.setItem('inventory', JSON.stringify(items));
+            renderItems();
+        }
+
+        // Function to render items from localStorage
+        function renderItems() {
+            let items = JSON.parse(localStorage.getItem('inventory')) || [];
+            let itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+            items.forEach((item, index) => {
+                let row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">${item.name}</td>
+                    <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200">${item.quantity}</td>
+                    <td class="px-6 py-4 whitespace-no-wrap border-b border-gray-200 text-right text-sm leading-5 font-medium">
+                        <button onclick="editItemPrompt(${index})"
+                        class=" hover:text-indigo-900
+                        bg-blue-500 px-2 py-1 rounded text-white">Edit</button>
+                        <button onclick="deleteItem(${index})" class="ml-2
+                      hover:text-red-900 bg-red-500 px-2 py-1
+                        rounded text-white">Delete</button>
+                    </td>
+                `;
+                itemList.appendChild(row);
+            });
+        }
+
+        // Submit form event listener
+        document.getElementById('addItemForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            let itemName = document.getElementById('itemName').value.trim();
+            let itemQuantity = document.getElementById('itemQuantity').value.trim();
+            if (!itemName || !itemQuantity) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops...',
+                    text: 'Item name and quantity are required!',
+                    confirmButtonColor: '#3B82F6'
+                });
+                return;
+            }
+            addItem(itemName, itemQuantity);
+            // Clear form inputs
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemQuantity').value = '';
+        });
+
+        // Prompt to edit item
+        function editItemPrompt(index) {
+            let items = JSON.parse(localStorage.getItem('inventory')) || [];
+            let currentItem = items[index];
+            Swal.fire({
+                title: 'Edit Item',
+                html: `
+                    <input id="editName" value="${currentItem.name}" class="swal2-input mb-2" placeholder="Item name">
+                    <input id="editQuantity" value="${currentItem.quantity}" class="swal2-input" placeholder="Quantity">
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Save Changes',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#3B82F6',
+                preConfirm: () => {
+                    let newName = document.getElementById('editName').value.trim();
+                    let newQuantity = document.getElementById('editQuantity').value.trim();
+                    if (!newName || !newQuantity) {
+                        Swal.showValidationMessage('Item name and quantity are required!');
+                    }
+                    editItem(index, newName, newQuantity);
+                }
+            });
+        }
+
+        // Initial render on page load
+        renderItems();
+    </script>
+</body>
+</html>
+  
